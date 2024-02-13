@@ -1,0 +1,2 @@
+../Core/Src/button_controls.c:21:6:initialize_user_button	1
+../Core/Src/button_controls.c:35:6:user_button_pressed_GPIO_variant	5

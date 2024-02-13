@@ -1,0 +1,3 @@
+../Core/Src/led_controls.c:14:6:initialize_leds	1
+../Core/Src/led_controls.c:46:6:toggle_group	4
+../Core/Src/led_controls.c:64:6:group_off	3

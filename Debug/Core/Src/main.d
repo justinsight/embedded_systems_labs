@@ -24,7 +24,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_i2c_ex.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h \
- ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f072xb.h
+ ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f072xb.h \
+ ../Core/Inc/../Inc/led_controls.h ../Core/Inc/../Inc/button_controls.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h:
 ../Core/Inc/stm32f0xx_hal_conf.h:
@@ -52,3 +53,5 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr.h:
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h:
 ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f072xb.h:
+../Core/Inc/../Inc/led_controls.h:
+../Core/Inc/../Inc/button_controls.h:

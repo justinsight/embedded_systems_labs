@@ -1,15 +1,17 @@
-Core/Src/stm32f0xx_hal_msp.o: ../Core/Src/stm32f0xx_hal_msp.c \
- ../Core/Inc/main.h ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h \
- ../Core/Inc/stm32f0xx_hal_conf.h \
- ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_rcc.h \
- ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_def.h \
- ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f0xx.h \
+Core/Src/button_controls.o: ../Core/Src/button_controls.c \
+ ../Core/Src/../Inc/button_controls.h \
  ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f072xb.h \
  ../Drivers/CMSIS/Include/core_cm0.h \
  ../Drivers/CMSIS/Include/cmsis_version.h \
  ../Drivers/CMSIS/Include/cmsis_compiler.h \
  ../Drivers/CMSIS/Include/cmsis_gcc.h \
  ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/system_stm32f0xx.h \
+ ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f0xx.h \
+ ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f072xb.h \
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h \
+ ../Core/Inc/stm32f0xx_hal_conf.h \
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_rcc.h \
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_def.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_rcc_ex.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_gpio.h \
@@ -23,21 +25,20 @@ Core/Src/stm32f0xx_hal_msp.o: ../Core/Src/stm32f0xx_hal_msp.c \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_i2c.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_i2c_ex.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr.h \
- ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h \
- ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f072xb.h \
- ../Core/Inc/../Inc/led_controls.h ../Core/Inc/../Inc/button_controls.h
-../Core/Inc/main.h:
-../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h:
-../Core/Inc/stm32f0xx_hal_conf.h:
-../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_rcc.h:
-../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_def.h:
-../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f0xx.h:
+ ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h
+../Core/Src/../Inc/button_controls.h:
 ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f072xb.h:
 ../Drivers/CMSIS/Include/core_cm0.h:
 ../Drivers/CMSIS/Include/cmsis_version.h:
 ../Drivers/CMSIS/Include/cmsis_compiler.h:
 ../Drivers/CMSIS/Include/cmsis_gcc.h:
 ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/system_stm32f0xx.h:
+../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f0xx.h:
+../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f072xb.h:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h:
+../Core/Inc/stm32f0xx_hal_conf.h:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_rcc.h:
+../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_def.h:
 ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h:
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_rcc_ex.h:
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_gpio.h:
@@ -52,6 +53,3 @@ Core/Src/stm32f0xx_hal_msp.o: ../Core/Src/stm32f0xx_hal_msp.c \
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_i2c_ex.h:
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr.h:
 ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h:
-../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f072xb.h:
-../Core/Inc/../Inc/led_controls.h:
-../Core/Inc/../Inc/button_controls.h:
