@@ -18,10 +18,10 @@
 #define LED_ON(COLOR)  		SET_BIT(GPIOC->BSRR, COLOR);
 #define LED_OFF(COLOR) 		SET_BIT(GPIOC->BRR, COLOR);
 
-#define COLOR_RED			GPIO_BSRR_BS_6
-#define COLOR_BLUE			GPIO_BSRR_BS_7
-#define COLOR_ORANGE		GPIO_BSRR_BS_8
-#define COLOR_GREEN			GPIO_BSRR_BS_9
+#define COLOR_RED			GPIO_BSRR_BS_6 // PC6
+#define COLOR_BLUE			GPIO_BSRR_BS_7 // PC7
+#define COLOR_ORANGE		GPIO_BSRR_BS_8 // PC8
+#define COLOR_GREEN			GPIO_BSRR_BS_9 // PC9
 
 // LED Initializations ==========================================================
 

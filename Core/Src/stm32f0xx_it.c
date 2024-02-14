@@ -20,45 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f0xx_it.h"
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-/* USER CODE END Includes */
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN TD */
-
-/* USER CODE END TD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
-/* External variables --------------------------------------------------------*/
-
-/* USER CODE BEGIN EV */
-
-/* USER CODE END EV */
 
 /******************************************************************************/
 /*           Cortex-M0 Processor Interruption and Exception Handlers          */
@@ -119,18 +81,47 @@ void PendSV_Handler(void)
   /* USER CODE END PendSV_IRQn 1 */
 }
 
+
+
+
+
+// FOR LAB 2 --------
+
+#define SYSTICK_HANDLER_CALL_TRIGGER_COUNT      100
+
+// This will keep track of the number of times the SysTick_Handler is called.
+static volatile uint8_t SysTick_Handler_call_count = 0;
+static volatile bool    SysTick_Handler_toggle     = false;
+
 /**
   * @brief This function handles System tick timer.
   */
 void SysTick_Handler(void)
 {
-  /* USER CODE BEGIN SysTick_IRQn 0 */
+    /* USER CODE BEGIN SysTick_IRQn 0 */
 
-  /* USER CODE END SysTick_IRQn 0 */
-  HAL_IncTick();
-  /* USER CODE BEGIN SysTick_IRQn 1 */
+    // Toggle the LED every 100 calls to the SysTick_Handler.
 
-  /* USER CODE END SysTick_IRQn 1 */
+    if (++SysTick_Handler_call_count >= SYSTICK_HANDLER_CALL_TRIGGER_COUNT) {
+
+        SysTick_Handler_call_count = 0;
+
+        if (SysTick_Handler_toggle) {
+
+            LED_ON(COLOR_BLUE);
+        } else {
+
+            LED_OFF(COLOR_BLUE);
+        }
+
+        SysTick_Handler_toggle = !SysTick_Handler_toggle;
+    }
+
+    /* USER CODE END SysTick_IRQn 0 */
+    HAL_IncTick();
+    /* USER CODE BEGIN SysTick_IRQn 1 */
+
+    /* USER CODE END SysTick_IRQn 1 */
 }
 
 /******************************************************************************/

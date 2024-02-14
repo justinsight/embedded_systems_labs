@@ -31,22 +31,44 @@ int main(void) {
     // Initialize the User Push Button
     initialize_user_button();
 
-    // LAB 1 Demonstration ------------------------------------------------------
+    // LAB 2 Demonstration ------------------------------------------------------
 
-    bool     toggle  = false;
-    bool     group   = false;
-    uint32_t counter = 0;
+    LED_ON(COLOR_GREEN);
 
-    while (1) {
+    // Configure EXT1
 
-        if (++counter % MAX_COUNT == 0)
-            toggle_group(group, (toggle = !toggle));
+    SET_BIT(EXTI->IMR,   EXTI_IMR_IM0);      // Enable interrupt for EXTI0
+    SET_BIT(EXTI->RTSR,  EXTI_RTSR_TR0);     // Enable rising edge trigger for EXTI0
+    SET_BIT(EXTI->SWIER, EXTI_SWIER_SWIER0); // Enables software interrupt for EXTI0
 
-        if (user_button_pressed_GPIO_variant()) {
+    // Enable the SYSCFG peripheral and connect RCC
 
-            group_off(group);
-            group = !group;
+    SET_BIT(RCC->APB2RSTR, RCC_APB2RSTR_SYSCFGRST);
+
+    // Set the EXTI0 to use the PA0 GPIO pin.
+
+    SET_BIT(SYSCFG->EXTICR[ SYSCFG_EXTICR1_EXTI0 ], SYSCFG_EXTICR1_EXTI0_PA);
+
+    // Enable the EXTI0 interrupt in the NVIC and set priority to 1 (High)
+
+    NVIC_EnableIRQ(EXTI0_1_IRQn);
+    NVIC_SetPriority(EXTI0_1_IRQn, 1);
+
+    // Enter infinite loop
+
+    bool toggle = false;
+
+    while(1) {
+
+        if((toggle = !toggle)) {
+
+            LED_ON(COLOR_RED);
+        } else {
+
+            LED_OFF(COLOR_RED);
         }
+
+        HAL_Delay(500);
     }
 }
 

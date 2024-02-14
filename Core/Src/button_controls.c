@@ -8,6 +8,7 @@
 // Includes =====================================================================
 
 #include "../Inc/button_controls.h"
+#include "../Inc/led_controls.h"
 
 // Global Variables =============================================================
 
@@ -31,6 +32,26 @@ void initialize_user_button( void ) {
 }
 
 // Function Implementations =====================================================
+
+static volatile bool button_pressed_interrupt_toggle = false;
+void EXTI0_1_IRQHandler( void ) {
+
+    if(button_pressed_interrupt_toggle){
+
+        LED_ON(COLOR_ORANGE);
+        LED_OFF(COLOR_GREEN);
+    } else {
+
+        LED_OFF(COLOR_ORANGE);
+        LED_ON(COLOR_GREEN);
+    }
+
+    button_pressed_interrupt_toggle = !button_pressed_interrupt_toggle;
+
+    // Clear the EXTI0 pending bit.
+
+    SET_BIT(EXTI->PR, EXTI_PR_PR0);
+}
 
 bool user_button_pressed_GPIO_variant( void ) {
 

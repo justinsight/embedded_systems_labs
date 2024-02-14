@@ -31,6 +31,19 @@ void initialize_user_button( void );
 // Helper Functions =============================================================
 
 /**
+ * @brief This function handles the User Button press interrupt.
+ *
+ * This will handle the interrupt from the core on the EXTI0_1 lines,
+ * of which the EXTI0 line is connected to the user button.
+ *
+ * Origin: LAB 2
+ *
+ * @note If we want to see other, pregenerated interrupt handlers, we can look
+ * at the stm32f0xx_it.c file.
+ */
+void EXTI0_1_IRQHandler( void );
+
+/**
  * @brief This will detect whether the button has been pressed or not.
  *
  * This will be used to detect whether the button has been pressed or not.
