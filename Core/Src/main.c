@@ -24,20 +24,19 @@ int main(void) {
 
     // Configure the system clock
     SystemClock_Config();
-
+    
     // Initialize the LEDs
     initialize_leds();
 
     // Initialize the User Push Button
-    //initialize_user_button();
+    initialize_user_button();
 
     // LAB 2 Demonstration ------------------------------------------------------
 
     // Configure EXT1
 
-    SET_BIT(EXTI->IMR,   EXTI_IMR_IM0);      // Enable interrupt for EXTI0
+    SET_BIT(EXTI->IMR,   EXTI_IMR_MR0);      // Enable interrupt for EXTI0
     SET_BIT(EXTI->RTSR,  EXTI_RTSR_TR0);     // Enable rising edge trigger for EXTI0
-    SET_BIT(EXTI->SWIER, EXTI_SWIER_SWIER0); // Enables software interrupt for EXTI0
 
     // Enable the SYSCFG peripheral and connect RCC
 
@@ -51,6 +50,7 @@ int main(void) {
 
     NVIC_SetPriority(EXTI0_1_IRQn, 1);
     NVIC_EnableIRQ(EXTI0_1_IRQn);
+
 
     LED_ON(COLOR_GREEN);
 
