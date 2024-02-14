@@ -1,3 +1,3 @@
 ../Core/Src/button_controls.c:22:6:initialize_user_button	1
-../Core/Src/button_controls.c:37:6:EXTI0_1_IRQHandler	2
-../Core/Src/button_controls.c:56:6:user_button_pressed_GPIO_variant	5
+../Core/Src/button_controls.c:38:6:EXTI0_1_IRQHandler	2
+../Core/Src/button_controls.c:54:6:user_button_pressed_GPIO_variant	5

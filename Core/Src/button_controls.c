@@ -33,20 +33,18 @@ void initialize_user_button( void ) {
 
 // Function Implementations =====================================================
 
-static volatile bool button_pressed_interrupt_toggle = false;
+#define MAX_DELAY_COUNT 1500000
+
 void EXTI0_1_IRQHandler( void ) {
 
-    if(button_pressed_interrupt_toggle){
+	LED_ON(COLOR_ORANGE);
+	LED_OFF(COLOR_GREEN);
 
-        LED_ON(COLOR_ORANGE);
-        LED_OFF(COLOR_GREEN);
-    } else {
+    // Add Long Delay
+    for(volatile uint32_t i = 0; i < MAX_DELAY_COUNT; i++) { }
 
-        LED_OFF(COLOR_ORANGE);
-        LED_ON(COLOR_GREEN);
-    }
-
-    button_pressed_interrupt_toggle = !button_pressed_interrupt_toggle;
+	LED_OFF(COLOR_ORANGE);
+	LED_ON(COLOR_GREEN);
 
     // Clear the EXTI0 pending bit.
 

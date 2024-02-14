@@ -29,11 +29,9 @@ int main(void) {
     initialize_leds();
 
     // Initialize the User Push Button
-    initialize_user_button();
+    //initialize_user_button();
 
     // LAB 2 Demonstration ------------------------------------------------------
-
-    LED_ON(COLOR_GREEN);
 
     // Configure EXT1
 
@@ -51,8 +49,10 @@ int main(void) {
 
     // Enable the EXTI0 interrupt in the NVIC and set priority to 1 (High)
 
-    NVIC_EnableIRQ(EXTI0_1_IRQn);
     NVIC_SetPriority(EXTI0_1_IRQn, 1);
+    NVIC_EnableIRQ(EXTI0_1_IRQn);
+
+    LED_ON(COLOR_GREEN);
 
     // Enter infinite loop
 
