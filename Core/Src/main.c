@@ -31,21 +31,42 @@ int main(void) {
     // Initialize the User Push Button
     initialize_user_button();
 
-    // LAB 2 Demonstration ------------------------------------------------------
+    // LAB 3 Demonstration ------------------------------------------------------
+
+    // 3.1: User Timer Interrupts ----------------------------------------------
+
+    // Enable the TIM2 Peripheral with the RCC
+    SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM2EN);
+
+    // Set TIM2 UEV to 4 Hz
+    WRITE_REG(TIM2->PSC, 99); // Prescaler -> 99
+    WRITE_REG(TIM2->ARR, 20000); // Auto-reload -> 20,000
+
+    // Enable the TIM2 Update Interrupt
+    SET_BIT(TIM2->DIER, TIM_DIER_UIE);
+    //SET_BIT(TIM2->DIER, TIM_DIER_TIE);
+
+    // Enable the TIM2 Counter (ie, turn it on)
+    SET_BIT(TIM2->CR1, TIM_CR1_CEN);
+
+    // Enable the TIM2 interrupt in the NVIC and set priority to 1 (High)
+    NVIC_SetPriority(TIM2_IRQn, 1);
+    NVIC_EnableIRQ(TIM2_IRQn);
 
     // Configure EXT1
-    SET_BIT(EXTI->IMR,   EXTI_IMR_MR0);      // Enable interrupt for EXTI0
-    SET_BIT(EXTI->RTSR,  EXTI_RTSR_TR0);     // Enable rising edge trigger for EXTI0
+
+    //SET_BIT(EXTI->IMR,   EXTI_IMR_MR0);      // Enable interrupt for EXTI0
+    //SET_BIT(EXTI->RTSR,  EXTI_RTSR_TR0);     // Enable rising edge trigger for EXTI0
 
     // Enable the SYSCFG peripheral and connect RCC
-    SET_BIT(RCC->APB2RSTR, RCC_APB2RSTR_SYSCFGRST);
+    //SET_BIT(RCC->APB2RSTR, RCC_APB2RSTR_SYSCFGRST);
 
     // Set the EXTI0 to use the PA0 GPIO pin.
-    SET_BIT(SYSCFG->EXTICR[ SYSCFG_EXTICR1_EXTI0 ], SYSCFG_EXTICR1_EXTI0_PA);
+    //SET_BIT(SYSCFG->EXTICR[ SYSCFG_EXTICR1_EXTI0 ], SYSCFG_EXTICR1_EXTI0_PA);
 
     // Enable the EXTI0 interrupt in the NVIC and set priority to 1 (High)
-    NVIC_SetPriority(EXTI0_1_IRQn, 1);
-    NVIC_EnableIRQ(EXTI0_1_IRQn);
+    //NVIC_SetPriority(EXTI0_1_IRQn, 1);
+    //NVIC_EnableIRQ(EXTI0_1_IRQn);
 
     // Enter infinite loop
 

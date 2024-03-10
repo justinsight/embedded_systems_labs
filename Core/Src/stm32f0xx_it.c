@@ -81,6 +81,34 @@ void PendSV_Handler(void)
   /* USER CODE END PendSV_IRQn 1 */
 }
 
+// FOR LAB 3 ---------------
+
+static volatile bool TIM2_Interrupt_toggle = false;
+
+/**
+ * @brief This function handles the TIM 2 UEV interrupt.
+ *
+ * This particular name found in startup_stm32f07r8tx.s.
+ *
+ */
+void TIM2_IRQHandler( void ) {
+
+    if (TIM2_Interrupt_toggle) {
+
+        LED_ON(COLOR_ORANGE);
+        LED_OFF(COLOR_GREEN);
+    } else {
+
+        LED_ON(COLOR_GREEN);
+        LED_OFF(COLOR_ORANGE);
+    }
+
+    TIM2_Interrupt_toggle = !TIM2_Interrupt_toggle;
+
+    // Clear the interrupt flag.
+    CLEAR_BIT(TIM2->SR, TIM_SR_UIF);
+}
+
 
 
 

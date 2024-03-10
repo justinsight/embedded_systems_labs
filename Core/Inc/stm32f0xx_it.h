@@ -53,6 +53,9 @@ void PendSV_Handler(void);
 void SysTick_Handler(void);
 /* USER CODE BEGIN EFP */
 
+// For LAB 3 - Definition in the implementation file.
+void TIM2_IRQHandler( void );
+
 /* USER CODE END EFP */
 
 #ifdef __cplusplus
