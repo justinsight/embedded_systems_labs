@@ -34,27 +34,22 @@ int main(void) {
     // LAB 2 Demonstration ------------------------------------------------------
 
     // Configure EXT1
-
     SET_BIT(EXTI->IMR,   EXTI_IMR_MR0);      // Enable interrupt for EXTI0
     SET_BIT(EXTI->RTSR,  EXTI_RTSR_TR0);     // Enable rising edge trigger for EXTI0
 
     // Enable the SYSCFG peripheral and connect RCC
-
     SET_BIT(RCC->APB2RSTR, RCC_APB2RSTR_SYSCFGRST);
 
     // Set the EXTI0 to use the PA0 GPIO pin.
-
     SET_BIT(SYSCFG->EXTICR[ SYSCFG_EXTICR1_EXTI0 ], SYSCFG_EXTICR1_EXTI0_PA);
 
     // Enable the EXTI0 interrupt in the NVIC and set priority to 1 (High)
-
     NVIC_SetPriority(EXTI0_1_IRQn, 1);
     NVIC_EnableIRQ(EXTI0_1_IRQn);
 
+    // Enter infinite loop
 
     LED_ON(COLOR_GREEN);
-
-    // Enter infinite loop
 
     bool toggle = false;
 

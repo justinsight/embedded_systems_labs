@@ -695,7 +695,6 @@ int main(void) {
     // LAB 2 Demonstration ------------------------------------------------------
 
     // Configure EXT1
-
     SET_BIT(EXTI->IMR,   EXTI_IMR_MR0);      // Enable interrupt for EXTI0
  80004e6:	4b26      	ldr	r3, [pc, #152]	; (8000580 <main+0xb0>)
  80004e8:	681a      	ldr	r2, [r3, #0]
@@ -712,7 +711,6 @@ int main(void) {
  80004fc:	609a      	str	r2, [r3, #8]
 
     // Enable the SYSCFG peripheral and connect RCC
-
     SET_BIT(RCC->APB2RSTR, RCC_APB2RSTR_SYSCFGRST);
  80004fe:	4b21      	ldr	r3, [pc, #132]	; (8000584 <main+0xb4>)
  8000500:	68da      	ldr	r2, [r3, #12]
@@ -722,7 +720,6 @@ int main(void) {
  8000508:	60da      	str	r2, [r3, #12]
 
     // Set the EXTI0 to use the PA0 GPIO pin.
-
     SET_BIT(SYSCFG->EXTICR[ SYSCFG_EXTICR1_EXTI0 ], SYSCFG_EXTICR1_EXTI0_PA);
  800050a:	4a1f      	ldr	r2, [pc, #124]	; (8000588 <main+0xb8>)
  800050c:	4b1e      	ldr	r3, [pc, #120]	; (8000588 <main+0xb8>)
@@ -730,7 +727,6 @@ int main(void) {
  8000510:	645a      	str	r2, [r3, #68]	; 0x44
 
     // Enable the EXTI0 interrupt in the NVIC and set priority to 1 (High)
-
     NVIC_SetPriority(EXTI0_1_IRQn, 1);
  8000512:	2101      	movs	r1, #1
  8000514:	2005      	movs	r0, #5
@@ -739,6 +735,7 @@ int main(void) {
  800051a:	2005      	movs	r0, #5
  800051c:	f7ff ff50 	bl	80003c0 <__NVIC_EnableIRQ>
 
+    // Enter infinite loop
 
     LED_ON(COLOR_GREEN);
  8000520:	4b1a      	ldr	r3, [pc, #104]	; (800058c <main+0xbc>)
@@ -748,8 +745,6 @@ int main(void) {
  8000528:	0089      	lsls	r1, r1, #2
  800052a:	430a      	orrs	r2, r1
  800052c:	619a      	str	r2, [r3, #24]
-
-    // Enter infinite loop
 
     bool toggle = false;
  800052e:	1dfb      	adds	r3, r7, #7
@@ -1289,7 +1284,7 @@ HAL_StatusTypeDef HAL_Init(void)
   /* Use systick as time base source and configure 1ms tick (default clock after Reset is HSI) */
 
   HAL_InitTick(TICK_INT_PRIORITY);
- 800076c:	2003      	movs	r0, #3
+ 800076c:	2000      	movs	r0, #0
  800076e:	f000 f809 	bl	8000784 <HAL_InitTick>
 
   /* Init the low level hardware */
@@ -3348,7 +3343,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
 
   /* Configure the source of time base considering new system clocks settings*/
   HAL_InitTick (TICK_INT_PRIORITY);
- 800126c:	2003      	movs	r0, #3
+ 800126c:	2000      	movs	r0, #0
  800126e:	f7ff fa89 	bl	8000784 <HAL_InitTick>
   
   return HAL_OK;
