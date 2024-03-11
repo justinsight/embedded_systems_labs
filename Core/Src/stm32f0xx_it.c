@@ -109,10 +109,6 @@ void TIM2_IRQHandler( void ) {
     CLEAR_BIT(TIM2->SR, TIM_SR_UIF);
 }
 
-
-
-
-
 // FOR LAB 2 --------
 
 #define SYSTICK_HANDLER_CALL_TRIGGER_COUNT      100
@@ -126,6 +122,9 @@ static volatile bool    SysTick_Handler_toggle     = false;
   */
 void SysTick_Handler(void)
 {
+
+    return; // We don't need to do anything here.
+
     /* USER CODE BEGIN SysTick_IRQn 0 */
 
     // Toggle the LED every 100 calls to the SysTick_Handler.

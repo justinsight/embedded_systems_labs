@@ -15,6 +15,7 @@
 void SystemClock_Config(void);
 
 #define MAX_COUNT           10000
+#define MAX_ARR             10000
 
 int main(void) {
 
@@ -44,7 +45,6 @@ int main(void) {
 
     // Enable the TIM2 Update Interrupt
     SET_BIT(TIM2->DIER, TIM_DIER_UIE);
-    //SET_BIT(TIM2->DIER, TIM_DIER_TIE);
 
     // Enable the TIM2 Counter (ie, turn it on)
     SET_BIT(TIM2->CR1, TIM_CR1_CEN);
@@ -53,38 +53,83 @@ int main(void) {
     NVIC_SetPriority(TIM2_IRQn, 1);
     NVIC_EnableIRQ(TIM2_IRQn);
 
-    // Configure EXT1
+    // 3.2: Configure Timer Channels to PWM Mode -------------------------------
 
-    //SET_BIT(EXTI->IMR,   EXTI_IMR_MR0);      // Enable interrupt for EXTI0
-    //SET_BIT(EXTI->RTSR,  EXTI_RTSR_TR0);     // Enable rising edge trigger for EXTI0
+    // Enable the TIM3 Peripheral with the RCC
+    SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM3EN);
 
-    // Enable the SYSCFG peripheral and connect RCC
-    //SET_BIT(RCC->APB2RSTR, RCC_APB2RSTR_SYSCFGRST);
+    // Set TIM2 UEV to 800 Hz
+    WRITE_REG(TIM3->PSC, 0);       // Prescaler -> 0;
+    WRITE_REG(TIM3->ARR, MAX_ARR); // Auto-reload -> 10000
 
-    // Set the EXTI0 to use the PA0 GPIO pin.
-    //SET_BIT(SYSCFG->EXTICR[ SYSCFG_EXTICR1_EXTI0 ], SYSCFG_EXTICR1_EXTI0_PA);
+    // Set the Compare/Capture channels to outputs
 
-    // Enable the EXTI0 interrupt in the NVIC and set priority to 1 (High)
-    //NVIC_SetPriority(EXTI0_1_IRQn, 1);
-    //NVIC_EnableIRQ(EXTI0_1_IRQn);
+    CLEAR_BIT(TIM3->CCMR1, TIM_CCMR1_CC1S); // Set to output - Values are 00
+    CLEAR_BIT(TIM3->CCMR1, TIM_CCMR1_CC2S); // Set to output - Values are 00
+
+    SET_BIT(TIM3->CCMR1, TIM_CCMR1_OC1M);                      // PWM Mode 2 - For Channel 1
+    SET_BIT(TIM3->CCMR1, TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2); // PWM Mode 1 - For Channel 2
+
+    // Enable output compare preload for both channels
+    SET_BIT(TIM3->CCMR1, TIM_CCMR1_OC1PE);
+    SET_BIT(TIM3->CCMR1, TIM_CCMR1_OC2PE);
+
+    SET_BIT(TIM3->CCER, TIM_CCER_CC1E); // Enable the output for channel 1
+    SET_BIT(TIM3->CCER, TIM_CCER_CC2E); // Enable the output for channel 2
+
+    // Set the Capture/Compare values for the channels at 20% the ARR value.
+    WRITE_REG(TIM3->CCR1, MAX_ARR);
+    WRITE_REG(TIM3->CCR2, MAX_ARR);
+
+    // 3.3: Configuring Pin Alternate Functions --------------
+
+    // Set alternate function for PC6 and PC7 to TIM3_CH1
+
+    SET_BIT(GPIOC->MODER, GPIO_MODER_MODER6_1); // Set PC6 to alternate function mode
+    SET_BIT(GPIOC->MODER, GPIO_MODER_MODER7_1); // Set PC7 to alternate function mode
+
+    WRITE_REG(*GPIOC->AFR, GPIO_AFRL_AFRL0); // Set the alternate function for PC6 and PC7 (pg 46)
+
+    // Enable the TIM3 Counter (ie, turn it on)
+
+    SET_BIT(TIM3->CR1, TIM_CR1_CEN);
 
     // Enter infinite loop
 
     LED_ON(COLOR_GREEN);
 
-    bool toggle = false;
+    volatile bool count_direction = false; // False means we count down, true to count up.
+    volatile uint16_t CCR_value   = MAX_ARR;
+
+    const uint8_t prescaler = 255;
 
     while(1) {
 
-        if((toggle = !toggle)) {
+        CCR_value = 0;
 
-            LED_ON(COLOR_RED);
+        // Change the Capture and Compare values for the channels up and down.
+        if(count_direction = !count_direction){
+            for(CCR_value = 0; CCR_value <= MAX_ARR; CCR_value += 10){
+
+                // Busy loop to slow down the PWM change.
+                for(volatile uint8_t i = 0; i < prescaler; i++) { }
+
+                WRITE_REG(TIM3->CCR1, CCR_value);
+                WRITE_REG(TIM3->CCR2, CCR_value);
+            }
+
         } else {
 
-            LED_OFF(COLOR_RED);
-        }
+            for(CCR_value = MAX_ARR; CCR_value > 0; CCR_value -= 10){
 
-        HAL_Delay(500);
+                // Busy loop to slow down the PWM change.
+                for(volatile uint8_t i = 0; i < prescaler; i++) { }
+
+                WRITE_REG(TIM3->CCR1, CCR_value);
+                WRITE_REG(TIM3->CCR2, CCR_value);
+            }
+
+        }
     }
 }
 

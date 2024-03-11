@@ -130,7 +130,7 @@ void SystemInit(void)
                          the "startup_stm32f0xx.s" file.
                          User can setups the default system clock (System clock source, PLL Multiplier
                          and Divider factors, AHB/APBx prescalers and Flash settings).
-   */
+  */
 }
 
 /**
