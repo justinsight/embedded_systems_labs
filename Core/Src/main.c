@@ -14,8 +14,33 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 
-#define MAX_COUNT           10000
-#define MAX_ARR             10000
+
+/**
+ * @brief This function will send a character over the UART3 peripheral.
+ *
+ * @param character The character to send.
+ */
+static void _uart_send_char(const char character) {
+
+    while (!READ_BIT(USART3->ISR, USART_ISR_TXE)) { } // Wait for the Transmit Data Register to be empty.
+
+    WRITE_REG(USART3->TDR, character); // Write the character to the Transmit Data Register.
+}
+
+/**
+ * @brief This function will send a string over the UART3 peripheral.
+ *
+ * @param string The string to send.
+ * @note The string must be null terminated.
+ */
+static void _uart_send_string(const char* string) {
+
+    char character;
+
+    while((character = *string++) != '\0')
+        _uart_send_char(character);
+}
+
 
 int main(void) {
 
@@ -32,104 +57,45 @@ int main(void) {
     // Initialize the User Push Button
     initialize_user_button();
 
-    // LAB 3 Demonstration ------------------------------------------------------
+    // LAB 4 Demonstration ------------------------------------------------------
 
-    // 3.1: User Timer Interrupts ----------------------------------------------
+    // Connect UART3 to the RCC
 
-    // Enable the TIM2 Peripheral with the RCC
-    SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM2EN);
+    SET_BIT(RCC->APB1ENR, RCC_APB1ENR_USART3EN);
 
-    // Set TIM2 UEV to 4 Hz
-    WRITE_REG(TIM2->PSC, 99); // Prescaler -> 99
-    WRITE_REG(TIM2->ARR, 20000); // Auto-reload -> 20,000
+    // Set the Alternate Pin function for PC4 and PC5 for USART3_TX and USART3_RX respectively.
 
-    // Enable the TIM2 Update Interrupt
-    SET_BIT(TIM2->DIER, TIM_DIER_UIE);
+    CLEAR_BIT(GPIOC->MODER, GPIO_MODER_MODER4_0); // Set the PC4 to alternate function mode.
+    CLEAR_BIT(GPIOC->MODER, GPIO_MODER_MODER5_0); // Set the PC5 to alternate function mode.
 
-    // Enable the TIM2 Counter (ie, turn it on)
-    SET_BIT(TIM2->CR1, TIM_CR1_CEN);
+    SET_BIT(GPIOC->MODER, GPIO_MODER_MODER4_1); // Set the PC4 to alternate function mode.
+    SET_BIT(GPIOC->MODER, GPIO_MODER_MODER5_1); // Set the PC5 to alternate function mode.
 
-    // Enable the TIM2 interrupt in the NVIC and set priority to 1 (High)
-    NVIC_SetPriority(TIM2_IRQn, 1);
-    NVIC_EnableIRQ(TIM2_IRQn);
+    // Set the alternate function to AF1 for PC4 and PC5.
 
-    // 3.2: Configure Timer Channels to PWM Mode -------------------------------
+    SET_BIT(GPIOC->AFR[0], (0x1 << GPIO_AFRL_AFSEL4_Pos)); // Set the PC4 to AF1. ( USART3_TX )
+    SET_BIT(GPIOC->AFR[0], (0x1 << GPIO_AFRL_AFSEL5_Pos)); // Set the PC5 to AF1. ( USART3_RX )
 
-    // Enable the TIM3 Peripheral with the RCC
-    SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM3EN);
+    // Set USART3 to 115200 Baud Rate.
+    const uint32_t BRR = HAL_RCC_GetHCLKFreq() / 115200;
 
-    // Set TIM2 UEV to 800 Hz
-    WRITE_REG(TIM3->PSC, 0);       // Prescaler -> 0;
-    WRITE_REG(TIM3->ARR, MAX_ARR); // Auto-reload -> 10000
+    WRITE_REG(USART3->BRR, BRR); // 115200 Baud Rate
 
-    // Set the Compare/Capture channels to outputs
+    // Enable the Transmitter and Receiver for USART3.
 
-    CLEAR_BIT(TIM3->CCMR1, TIM_CCMR1_CC1S); // Set to output - Values are 00
-    CLEAR_BIT(TIM3->CCMR1, TIM_CCMR1_CC2S); // Set to output - Values are 00
+    SET_BIT(USART3->CR1, USART_CR1_TE); // Enable the Transmitter
+    SET_BIT(USART3->CR1, USART_CR1_RE); // Enable the Receiver
 
-    SET_BIT(TIM3->CCMR1, TIM_CCMR1_OC1M);                      // PWM Mode 2 - For Channel 1
-    SET_BIT(TIM3->CCMR1, TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2); // PWM Mode 1 - For Channel 2
+    // Enable the USART3
 
-    // Enable output compare preload for both channels
-    SET_BIT(TIM3->CCMR1, TIM_CCMR1_OC1PE);
-    SET_BIT(TIM3->CCMR1, TIM_CCMR1_OC2PE);
-
-    SET_BIT(TIM3->CCER, TIM_CCER_CC1E); // Enable the output for channel 1
-    SET_BIT(TIM3->CCER, TIM_CCER_CC2E); // Enable the output for channel 2
-
-    // Set the Capture/Compare values for the channels at 20% the ARR value.
-    WRITE_REG(TIM3->CCR1, MAX_ARR);
-    WRITE_REG(TIM3->CCR2, MAX_ARR);
-
-    // 3.3: Configuring Pin Alternate Functions --------------
-
-    // Set alternate function for PC6 and PC7 to TIM3_CH1
-
-    SET_BIT(GPIOC->MODER, GPIO_MODER_MODER6_1); // Set PC6 to alternate function mode
-    SET_BIT(GPIOC->MODER, GPIO_MODER_MODER7_1); // Set PC7 to alternate function mode
-
-    WRITE_REG(*GPIOC->AFR, GPIO_AFRL_AFRL0); // Set the alternate function for PC6 and PC7 (pg 46)
-
-    // Enable the TIM3 Counter (ie, turn it on)
-
-    SET_BIT(TIM3->CR1, TIM_CR1_CEN);
-
-    // Enter infinite loop
+    SET_BIT(USART3->CR1, USART_CR1_UE); // Enable the UART3 Peripheral
 
     LED_ON(COLOR_GREEN);
 
-    volatile bool count_direction = false; // False means we count down, true to count up.
-    volatile uint16_t CCR_value   = MAX_ARR;
-
-    const uint8_t prescaler = 255;
-
     while(1) {
 
-        CCR_value = 0;
-
-        // Change the Capture and Compare values for the channels up and down.
-        if(count_direction = !count_direction){
-            for(CCR_value = 0; CCR_value <= MAX_ARR; CCR_value += 10){
-
-                // Busy loop to slow down the PWM change.
-                for(volatile uint8_t i = 0; i < prescaler; i++) { }
-
-                WRITE_REG(TIM3->CCR1, CCR_value);
-                WRITE_REG(TIM3->CCR2, CCR_value);
-            }
-
-        } else {
-
-            for(CCR_value = MAX_ARR; CCR_value > 0; CCR_value -= 10){
-
-                // Busy loop to slow down the PWM change.
-                for(volatile uint8_t i = 0; i < prescaler; i++) { }
-
-                WRITE_REG(TIM3->CCR1, CCR_value);
-                WRITE_REG(TIM3->CCR2, CCR_value);
-            }
-
-        }
+        // Send Hello World through the UART3 Peripheral.
+        _uart_send_string("Hello World!\n\r");
     }
 }
 

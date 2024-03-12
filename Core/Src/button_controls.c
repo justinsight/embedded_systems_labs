@@ -28,7 +28,7 @@ void initialize_user_button( void ) {
     //CLEAR_BIT(GPIOA->OSPEEDR, GPIO_OSPEEDR_OSPEEDR0_0);
 
     // Set the GPIO to have a pull down resistor.
-    SET_BIT(GPIOA->PUPDR, GPIO_PUPDR_PUPDR0_1);
+    //SET_BIT(GPIOA->PUPDR, GPIO_PUPDR_PUPDR0_1);
 }
 
 // Function Implementations =====================================================
