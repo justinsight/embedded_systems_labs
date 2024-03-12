@@ -34,7 +34,6 @@ static char _uart_receive_char( void ) {
     READ_REG(USART3->RDR); // Read the character from the Receive Data Register.
 }
 
-
 /**
  * @brief This function will send a string over the UART3 peripheral.
  *
@@ -49,6 +48,30 @@ static void _uart_send_string(const char* string) {
         _uart_send_char(character);
 }
 
+// For UART reception and flagging
+static bool data_received = false;
+static char data;
+
+/**
+ * @brief This function will handle the USART3 and USART4 interrupts.
+ *
+ * For our particular case, we will be using USART3 exclusively,
+ * so we will not be checking for USART4 interrupts.
+ */
+void USART3_4_IRQHandler( void ) {
+
+    const bool read_register_full = READ_BIT(USART3->ISR, USART_ISR_RXNE);
+
+    if (read_register_full) {
+
+        if(data_received)
+            return;
+
+        data_received = true;
+
+        data = READ_REG(USART3->RDR);
+    }
+}
 
 int main(void) {
 
@@ -94,43 +117,112 @@ int main(void) {
     SET_BIT(USART3->CR1, USART_CR1_TE); // Enable the Transmitter
     SET_BIT(USART3->CR1, USART_CR1_RE); // Enable the Receiver
 
+    // Enable the USART3 Interrupt for receiving
+
+    SET_BIT(USART3->CR1, USART_CR1_RXNEIE); // Enable the USART3 Receive Interrupt
+
+    NVIC_SetPriority(USART3_4_IRQn, 1); // Set the priority to 1.
+    NVIC_EnableIRQ(USART3_4_IRQn); // Enable the USART3 Interrupt
+
     // Enable the USART3
 
     SET_BIT(USART3->CR1, USART_CR1_UE); // Enable the UART3 Peripheral
 
     _uart_send_string("Welcome to LED Toggle!\n\r");
-    _uart_send_string("\n\rPlease enter any of the following to toggle the LED's.\n\r");
-    _uart_send_string("\n\rR (red)\n\rG (green)\n\rB (blue)\n\rO (Orange)\n\r\r");
+    _uart_send_string("\n\rPlease enter one color and one action.\n\r");
+    _uart_send_string("COLOR:\n\r\tR (red)\n\r\tG (green)\n\r\tB (blue)\n\r\tO (Orange)\n\r");
+    _uart_send_string("ACTION:\n\r\t0 (off)\n\r\t1 (on)\n\r\t2 (toggle)\n\r\r");
+
+    _uart_send_string("input> ");
+
+    char    data_buffer[2] = {0};
+    uint8_t data_index     = 0;
 
     while(1) {
 
-        const char character = _uart_receive_char();
+        if(!data_received)
+            continue;
 
-        switch (character) {
+        data_buffer[ data_index++ ] = data;
+
+        _uart_send_char(data);
+
+        if(data_index < 2){
+
+            data_received = false;
+            continue;
+        }
+
+        bool valid_command = true;
+
+        uint32_t color  = 0;
+        uint8_t  action = 0;
+
+        switch (data_buffer[0]) {
             case 'R':
-
-                LED_TOGGLE(COLOR_RED);
+                color = COLOR_RED;
                 break;
             case 'B':
 
-                LED_TOGGLE(COLOR_BLUE);
+                color = COLOR_BLUE;
                 break;
             case 'G':
 
-                LED_TOGGLE(COLOR_GREEN);
+                color = COLOR_GREEN;
                 break;
             case 'O':
 
-                LED_TOGGLE(COLOR_ORANGE);
+                color = COLOR_ORANGE;
                 break;
             default:
 
-                char error_message[] = "Invalid character entered(' ')\n\r";
-                error_message[27] = character;
-
-                _uart_send_string(error_message);
+                valid_command = false;
                 break;
         }
+
+        action = data_buffer[1] - '0';
+
+        if(action > 2)
+            valid_command = false;
+
+        if(valid_command) {
+
+            switch (action) {
+                case 0:
+
+                    LED_OFF(color);
+                    break;
+                case 1:
+
+                    LED_ON(color);
+                    break;
+                case 2:
+
+                    LED_TOGGLE(color);
+                    break;
+            }
+
+            char success_message[] = "\n\rsuccess>    executed.\n\r";
+
+            success_message[11] = data_buffer[0];
+            success_message[12] = data_buffer[1];
+
+            _uart_send_string(success_message);
+
+        } else {
+
+            char error_message[] = "\n\rerror>    is an invalid command.\n\r";
+
+            error_message[9] = data_buffer[0];
+            error_message[10] = data_buffer[1];
+
+            _uart_send_string(error_message);
+        }
+
+        _uart_send_string("input> ");
+        data_index = 0;
+
+        data_received = false;
     }
 }
 

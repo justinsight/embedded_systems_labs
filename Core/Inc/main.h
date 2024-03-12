@@ -36,6 +36,7 @@ extern "C" {
 #include "../Inc/led_controls.h"
 #include "../Inc/button_controls.h"
 
+// Helper Function Headers ------------------------------------------------------
 
 void Error_Handler(void);
 
