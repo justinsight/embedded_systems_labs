@@ -27,6 +27,14 @@ static void _uart_send_char(const char character) {
     WRITE_REG(USART3->TDR, character); // Write the character to the Transmit Data Register.
 }
 
+static char _uart_receive_char( void ) {
+
+    while(!READ_BIT(USART3->ISR, USART_ISR_RXNE)) { } // Wait until the Receive Data Register is not empty.
+
+    READ_REG(USART3->RDR); // Read the character from the Receive Data Register.
+}
+
+
 /**
  * @brief This function will send a string over the UART3 peripheral.
  *
@@ -90,12 +98,39 @@ int main(void) {
 
     SET_BIT(USART3->CR1, USART_CR1_UE); // Enable the UART3 Peripheral
 
-    LED_ON(COLOR_GREEN);
+    _uart_send_string("Welcome to LED Toggle!\n\r");
+    _uart_send_string("\n\rPlease enter any of the following to toggle the LED's.\n\r");
+    _uart_send_string("\n\rR (red)\n\rG (green)\n\rB (blue)\n\rO (Orange)\n\r\r");
 
     while(1) {
 
-        // Send Hello World through the UART3 Peripheral.
-        _uart_send_string("Hello World!\n\r");
+        const char character = _uart_receive_char();
+
+        switch (character) {
+            case 'R':
+
+                LED_TOGGLE(COLOR_RED);
+                break;
+            case 'B':
+
+                LED_TOGGLE(COLOR_BLUE);
+                break;
+            case 'G':
+
+                LED_TOGGLE(COLOR_GREEN);
+                break;
+            case 'O':
+
+                LED_TOGGLE(COLOR_ORANGE);
+                break;
+            default:
+
+                char error_message[] = "Invalid character entered(' ')\n\r";
+                error_message[27] = character;
+
+                _uart_send_string(error_message);
+                break;
+        }
     }
 }
 

@@ -15,8 +15,9 @@
 
 // Macros =======================================================================
 
-#define LED_ON(COLOR)  		SET_BIT(GPIOC->BSRR, COLOR);
-#define LED_OFF(COLOR) 		SET_BIT(GPIOC->BRR, COLOR);
+#define LED_ON(COLOR)  		SET_BIT(GPIOC->BSRR, COLOR)
+#define LED_OFF(COLOR) 		SET_BIT(GPIOC->BRR, COLOR)
+#define LED_TOGGLE(COLOR) 	READ_BIT(GPIOC->ODR, COLOR) ? LED_OFF(COLOR) : LED_ON(COLOR);
 
 #define COLOR_RED			GPIO_BSRR_BS_6 // PC6
 #define COLOR_BLUE			GPIO_BSRR_BS_7 // PC7
