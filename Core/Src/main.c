@@ -14,6 +14,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 
+// UART Functions ===============================================================
 
 /**
  * @brief This function will send a character over the UART3 peripheral.
@@ -73,6 +74,25 @@ void USART3_4_IRQHandler( void ) {
     }
 }
 
+// I2C Functions ===============================================================
+
+static void i2c_initialization_error(const uint32_t error_color) {
+
+    // Stop the transaction.
+    SET_BIT(I2C2->CR2, I2C_CR2_STOP);
+
+    uint32_t counter = 0;
+    bool     toggle  = false;
+
+    while(1)
+        if(!(counter++ % 10000))
+            (toggle = !toggle) ? LED_ON(error_color) : LED_OFF(error_color);
+}
+
+
+
+// Main Program ================================================================
+
 int main(void) {
 
     // MCU Configuration--------------------------------------------------------
@@ -88,141 +108,112 @@ int main(void) {
     // Initialize the User Push Button
     initialize_user_button();
 
-    // LAB 4 Demonstration ------------------------------------------------------
+    // LAB 5 Demonstration ------------------------------------------------------
 
-    // Connect UART3 to the RCC
+    // Connect GPIOC and GPIOB to the RCC
 
-    SET_BIT(RCC->APB1ENR, RCC_APB1ENR_USART3EN);
+    SET_BIT(RCC->AHBENR, RCC_AHBENR_GPIOBEN);
+    //SET_BIT(RCC->AHBENR, RCC_AHBENR_GPIOCEN);
 
-    // Set the Alternate Pin function for PC4 and PC5 for USART3_TX and USART3_RX respectively.
+    // Enable the I2C2 Peripheral in the RCC
 
-    CLEAR_BIT(GPIOC->MODER, GPIO_MODER_MODER4_0); // Set the PC4 to alternate function mode.
-    CLEAR_BIT(GPIOC->MODER, GPIO_MODER_MODER5_0); // Set the PC5 to alternate function mode.
+    SET_BIT(RCC->APB1ENR, RCC_APB1ENR_I2C2EN);
 
-    SET_BIT(GPIOC->MODER, GPIO_MODER_MODER4_1); // Set the PC4 to alternate function mode.
-    SET_BIT(GPIOC->MODER, GPIO_MODER_MODER5_1); // Set the PC5 to alternate function mode.
+    // Set PB11 into alternate function mode and with open-drain output type.
 
-    // Set the alternate function to AF1 for PC4 and PC5.
+    SET_BIT(GPIOB->MODER, GPIO_MODER_MODER11_1); // Set the PB11 to alternate function mode.
+    SET_BIT(GPIOB->MODER, GPIO_MODER_MODER13_1); // Set the PB13 to alternate function mode.
+    CLEAR_BIT(GPIOB->MODER, GPIO_MODER_MODER15); // Set the PB13 to alternate function mode.
 
-    SET_BIT(GPIOC->AFR[0], (0x1 << GPIO_AFRL_AFSEL4_Pos)); // Set the PC4 to AF1. ( USART3_TX )
-    SET_BIT(GPIOC->AFR[0], (0x1 << GPIO_AFRL_AFSEL5_Pos)); // Set the PC5 to AF1. ( USART3_RX )
+    SET_BIT(GPIOB->OTYPER, GPIO_OTYPER_OT_11);   // Set PB11 to open-drain output type.
+    SET_BIT(GPIOB->OTYPER, GPIO_OTYPER_OT_13);   // Set PB13 to open-drain output type.
 
-    // Set USART3 to 115200 Baud Rate.
-    const uint32_t BRR = HAL_RCC_GetHCLKFreq() / 115200;
+    SET_BIT(GPIOB->AFR[1], (0x1 << GPIO_AFRH_AFSEL11_Pos)); // Set the PB11 to AF1. ( I2C2_SDA )
+    SET_BIT(GPIOB->AFR[1], (0x5 << GPIO_AFRH_AFSEL13_Pos)); // Set the PB13 to AF5. ( I2C2_SCL )
 
-    WRITE_REG(USART3->BRR, BRR); // 115200 Baud Rate
+    // Set pins PB11 and PB13 to have pull-up resistors.
 
-    // Enable the Transmitter and Receiver for USART3.
+    SET_BIT(GPIOB->PUPDR, GPIO_PUPDR_PUPDR11_0);
+    SET_BIT(GPIOB->PUPDR, GPIO_PUPDR_PUPDR13_0);
 
-    SET_BIT(USART3->CR1, USART_CR1_TE); // Enable the Transmitter
-    SET_BIT(USART3->CR1, USART_CR1_RE); // Enable the Receiver
+    // Set PB14 and PC0 to output mode, push-pull output, and initialize with high output.
 
-    // Enable the USART3 Interrupt for receiving
+    SET_BIT(GPIOB->MODER, GPIO_MODER_MODER14_0); // Set the PB14 to general purpose output mode.
+    SET_BIT(GPIOC->MODER, GPIO_MODER_MODER0_0);  // Set the PC0 to general purpose output mode.
 
-    SET_BIT(USART3->CR1, USART_CR1_RXNEIE); // Enable the USART3 Receive Interrupt
+    CLEAR_BIT(GPIOB->OTYPER, GPIO_OTYPER_OT_14); // Set the PB14 to push-pull output type.
+    CLEAR_BIT(GPIOC->OTYPER, GPIO_OTYPER_OT_0);  // Set the PC0 to push-pull output type.
 
-    NVIC_SetPriority(USART3_4_IRQn, 1); // Set the priority to 1.
-    NVIC_EnableIRQ(USART3_4_IRQn); // Enable the USART3 Interrupt
+    SET_BIT(GPIOB->ODR, GPIO_ODR_14);            // Set the PB14 to high output.
+    SET_BIT(GPIOC->ODR, GPIO_ODR_0);             // Set the PC0 to high output.
 
-    // Enable the USART3
+    // Set the I2C2 Peripheral to 100kHz
 
-    SET_BIT(USART3->CR1, USART_CR1_UE); // Enable the UART3 Peripheral
+    SET_BIT(I2C2->TIMINGR, (0x1  << I2C_TIMINGR_PRESC_Pos));  // Set the prescaler to 1.
+    SET_BIT(I2C2->TIMINGR, (0x13 << I2C_TIMINGR_SCLL_Pos));   // Set the SCL low period to 19.
+    SET_BIT(I2C2->TIMINGR, (0xF  << I2C_TIMINGR_SCLH_Pos));   // Set the SCL high period to 15.
+    SET_BIT(I2C2->TIMINGR, (0x2  << I2C_TIMINGR_SDADEL_Pos)); // Set the SDA hold time to 2.
+    SET_BIT(I2C2->TIMINGR, (0x4  << I2C_TIMINGR_SCLDEL_Pos)); // Set the SCL hold time to 4.
 
-    _uart_send_string("Welcome to LED Toggle!\n\r");
-    _uart_send_string("\n\rPlease enter one color and one action.\n\r");
-    _uart_send_string("COLOR:\n\r\tR (red)\n\r\tG (green)\n\r\tB (blue)\n\r\tO (Orange)\n\r");
-    _uart_send_string("ACTION:\n\r\t0 (off)\n\r\t1 (on)\n\r\t2 (toggle)\n\r\r");
+    // Enable the I2C2 Peripheral
 
-    _uart_send_string("input> ");
+    SET_BIT(I2C2->CR1, I2C_CR1_PE);
 
-    char    data_buffer[2] = {0};
-    uint8_t data_index     = 0;
+    // Set up the transaction parameters
+    // Set the slave address to the Gyroscope to 0x69
 
-    while(1) {
+    SET_BIT(I2C2->CR2, (0x69 << 1));               // In 7 bit address mode, we have to write to bits [7:1], not [6:0].
+    SET_BIT(I2C2->CR2, (1 << I2C_CR2_NBYTES_Pos)); // Set the number of bytes to transfer to 1.
+    CLEAR_BIT(I2C2->CR2, I2C_CR2_RD_WRN);          // Set the transfer direction to write.
 
-        if(!data_received)
-            continue;
+    SET_BIT(I2C2->CR2, I2C_CR2_START); // Start the transaction.
 
-        data_buffer[ data_index++ ] = data;
+    // Wait for either the TXIS or NACKF flag to be set.
 
-        _uart_send_char(data);
+    while(!READ_BIT(I2C2->ISR, I2C_ISR_TXIS) && !READ_BIT(I2C2->ISR, I2C_ISR_NACKF)) { } // WARNING: May have to reset the TXIS flag if it is set.
 
-        if(data_index < 2){
+    // If the NACKF flag is set, then the slave did not acknowledge the address.
 
-            data_received = false;
-            continue;
-        }
+    if(READ_BIT(I2C2->ISR, I2C_ISR_NACKF))
+        i2c_initialization_error(COLOR_RED);
 
-        bool valid_command = true;
+    // Request the WHO_AM_I register from the Gyroscope and wait for the transaction to complete.
 
-        uint32_t color  = 0;
-        uint8_t  action = 0;
+    SET_BIT(I2C2->TXDR, 0xF); // Address of the WHO_AM_I register on the gyroscope.
 
-        switch (data_buffer[0]) {
-            case 'R':
-                color = COLOR_RED;
-                break;
-            case 'B':
+    while(!READ_BIT(I2C2->ISR, I2C_ISR_TC)) { } // Wait for the transaction to complete.
 
-                color = COLOR_BLUE;
-                break;
-            case 'G':
+    // Keeping all the values the same in CR2, we'll send a read request in RD_WRN
 
-                color = COLOR_GREEN;
-                break;
-            case 'O':
+    SET_BIT(I2C2->CR2, I2C_CR2_RD_WRN); // Set the transfer direction to read.
+    SET_BIT(I2C2->CR2, I2C_CR2_START);  // Start again for restart condition.
 
-                color = COLOR_ORANGE;
-                break;
-            default:
+    while(!READ_BIT(I2C2->ISR, I2C_ISR_RXNE) && !READ_BIT(I2C2->ISR, I2C_ISR_NACKF)) { } // WARNING: May have to reset the TXIS flag if it is set.
 
-                valid_command = false;
-                break;
-        }
+    if(READ_BIT(I2C2->ISR, I2C_ISR_NACKF))
+        i2c_initialization_error(COLOR_BLUE);
 
-        action = data_buffer[1] - '0';
+    while(!READ_BIT(I2C2->ISR, I2C_ISR_TC)) { } // Wait for the transaction to complete.
 
-        if(action > 2)
-            valid_command = false;
+    // Set STOP bit to end the transaction.
 
-        if(valid_command) {
+    SET_BIT(I2C2->CR2, I2C_CR2_STOP);
 
-            switch (action) {
-                case 0:
+    // Read the data from the RXDR register.
 
-                    LED_OFF(color);
-                    break;
-                case 1:
+    if(READ_BIT(I2C2->RXDR, I2C_RXDR_RXDATA) != 0xD3) // Determine if the value returned in the WHO_AM_I register is what we're expecting.
+        i2c_initialization_error(COLOR_ORANGE);
 
-                    LED_ON(color);
-                    break;
-                case 2:
+    // Blinking a green led to indicate that we have successfully read the WHO_AM_I register from the gyroscope.
 
-                    LED_TOGGLE(color);
-                    break;
-            }
+    while(1){
 
-            char success_message[] = "\n\rsuccess>    executed.\n\r";
+        uint32_t counter = 0;
+        bool     toggle  = false;
 
-            success_message[11] = data_buffer[0];
-            success_message[12] = data_buffer[1];
-
-            _uart_send_string(success_message);
-
-        } else {
-
-            char error_message[] = "\n\rerror>    is an invalid command.\n\r";
-
-            error_message[9] = data_buffer[0];
-            error_message[10] = data_buffer[1];
-
-            _uart_send_string(error_message);
-        }
-
-        _uart_send_string("input> ");
-        data_index = 0;
-
-        data_received = false;
+        while(1)
+            if(!(counter++ % 10000))
+                (toggle = !toggle) ? LED_ON(COLOR_GREEN) : LED_OFF(COLOR_GREEN);
     }
 }
 
