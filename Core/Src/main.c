@@ -30,12 +30,12 @@ int main(void) {
 
     // LAB 6 Demonstration ------------------------------------------------------
 
-    // WARNING: Determine if we need to attach the GPIO to the RCC
+    // ADC ----------------------------------------------------------------------
 
     // Configure GPIO PA1 as an analog input.
 
-    SET_BIT(GPIOA->MODER, GPIO_MODER_MODER0);   // Set to Analog mode: 0x3
-    CLEAR_BIT(GPIOA->PUPDR, GPIO_PUPDR_PUPDR0); // Ensure no pull-up, no pull-down: 0x0
+    SET_BIT(GPIOA->MODER, GPIO_MODER_MODER1);   // Set to Analog mode: 0x3
+    CLEAR_BIT(GPIOA->PUPDR, GPIO_PUPDR_PUPDR1); // Ensure no pull-up, no pull-down: 0x0
 
     // Enable the ADC1 Peripheral in the RCC.
 
@@ -63,9 +63,32 @@ int main(void) {
 
     SET_BIT(ADC1->CR, ADC_CR_ADSTART); // Start the ADC.
 
+    // DAC ----------------------------------------------------------------------
+
+    SET_BIT(RCC->APB1ENR, RCC_APB1ENR_DACEN); // Enable the DAC in the RCC.
+
+    // Configure GPIO PA4 as an analog output.
+
+    SET_BIT(GPIOA->MODER, GPIO_MODER_MODER4);   // Set to Analog mode: 0x3
+    CLEAR_BIT(GPIOA->PUPDR, GPIO_PUPDR_PUPDR4); // Ensure no pull-up, no pull-down: 0x0
+
+    // Set the DAC to software trigger mode.
+
+    SET_BIT(DAC->CR, DAC_CR_TSEL1); // Set the trigger to software trigger.
+    SET_BIT(DAC->CR, DAC_CR_TEN1);  // Enable the trigger for channel 1.
+
+    // Enable the DAC (channel 1).
+
+    SET_BIT(DAC->CR, DAC_CR_EN1); // Enable the DAC.
+
+    // Triangle Wave: 8-bit, 32 samples/cycle
+    const uint8_t triangle_table[32] = {0,15,31,47,63,79,95,111,127,142,158,174,
+                                        190,206,222,238,254,238,222,206,190,174,
+                                        158,142,127,111,95,79,63,47,31,15};
+
     while (1) {
 
-        HAL_Delay(10); // Delay for 10ms.
+        HAL_Delay(1); // Delay for 1ms.
 
         // Read the ADC data register and turn on/off the LEDs based on the value.
 
@@ -75,6 +98,18 @@ int main(void) {
         adc_value > 64  ? LED_ON(COLOR_GREEN)  : LED_OFF(COLOR_GREEN);
         adc_value > 128 ? LED_ON(COLOR_BLUE)   : LED_OFF(COLOR_BLUE);
         adc_value > 192 ? LED_ON(COLOR_ORANGE) : LED_OFF(COLOR_ORANGE);
+
+        // Write the DAC data register with the next value in the triangle wave table.
+
+        static uint8_t triangle_index = 0;
+
+        while(READ_BIT(DAC->SWTRIGR, DAC_SWTRIGR_SWTRIG1)) { } // Wait for the DAC to be ready.
+
+        WRITE_REG(DAC->DHR8R1, triangle_table[triangle_index]);
+        
+        SET_BIT(DAC->SWTRIGR, DAC_SWTRIGR_SWTRIG1);
+
+        triangle_index = (triangle_index + 1) % 32;
     }
 }
 
