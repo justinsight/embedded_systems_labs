@@ -14,6 +14,18 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 
+// Simple Helper Functions =====================================================
+
+static void blink_led_forever(const uint32_t color) {
+
+    uint32_t counter = 0;
+    bool     toggle  = false;
+
+    while(1)
+        if(!(counter++ % 10000))
+            (toggle = !toggle) ? LED_ON(color) : LED_OFF(color);
+}
+
 // UART Functions ===============================================================
 
 /**
@@ -89,31 +101,69 @@ static void i2c_initialization_error(const uint32_t error_color) {
             (toggle = !toggle) ? LED_ON(error_color) : LED_OFF(error_color);
 }
 
+static void _i2c_readwrite_byte(const uint8_t byte, const uint32_t target_register, const bool read_or_write) {
+
+    // Setup the first write transaction to the gyroscope to request the particular register.
+
+    CLEAR_BIT(I2C2->CR2, I2C_CR2_RD_WRN); // Set the transfer direction to write initially.
+
+    SET_BIT(I2C2->CR2, (0x69 << 1));
+
+    CLEAR_BIT(I2C2->CR2, I2C_CR2_NBYTES);
+    SET_BIT(I2C2->CR2, (1 << I2C_CR2_NBYTES_Pos));
+
+    SET_BIT(I2C2->CR2, I2C_CR2_START);
+
+    while(!READ_BIT(I2C2->ISR, I2C_ISR_TXIS) && !READ_BIT(I2C2->ISR, I2C_ISR_NACKF)) { }
+
+    if(READ_BIT(I2C2->ISR, I2C_ISR_NACKF))
+        i2c_initialization_error(COLOR_ORANGE);
+
+    SET_BIT(I2C2->TXDR, target_register); // Set the target address.
+
+    while(!READ_BIT(I2C2->ISR, I2C_ISR_TC)) { } // Wait for the transaction to complete.
+
+    // Keeping all the values the same in CR2, we'll send either a read or write request in RD_WRN.
+
+    if(read_or_write) {
+
+        SET_BIT(I2C2->CR2, I2C_CR2_RD_WRN); // Set the transfer direction to read.
+
+        SET_BIT(I2C2->CR2, I2C_CR2_START);  // Start again for restart condition (only in read mode).
+
+        while(!READ_BIT(I2C2->ISR, I2C_ISR_RXNE) && !READ_BIT(I2C2->ISR, I2C_ISR_NACKF)) { } // WARNING: May have to reset the TXIS flag if it is set.
+
+        if(READ_BIT(I2C2->ISR, I2C_ISR_NACKF))
+            i2c_initialization_error(COLOR_ORANGE);
+
+        // Read the data from the RXDR register.
+
+        const uint8_t data = READ_REG(I2C2->RXDR);
+
+    } else {
+
+        while(!READ_BIT(I2C2->ISR, I2C_ISR_TXIS) && !READ_BIT(I2C2->ISR, I2C_ISR_NACKF)) { }
+    }
 
 
-// Main Program ================================================================
 
-int main(void) {
+    while(!READ_BIT(I2C2->ISR, I2C_ISR_RXNE) && !READ_BIT(I2C2->ISR, I2C_ISR_NACKF)) { } // WARNING: May have to reset the TXIS flag if it is set.
 
-    // MCU Configuration--------------------------------------------------------
-    // Reset of all peripherals, Initializes the Flash interface and the Systick.
-    HAL_Init();
+    if(READ_BIT(I2C2->ISR, I2C_ISR_NACKF))
+        i2c_initialization_error(COLOR_BLUE);
 
-    // Configure the system clock
-    SystemClock_Config();
-    
-    // Initialize the LEDs
-    initialize_leds();
+    while(!READ_BIT(I2C2->ISR, I2C_ISR_TC)) { } // Wait for the transaction to complete.
 
-    // Initialize the User Push Button
-    initialize_user_button();
+    // Set STOP bit to end the transaction.
 
-    // LAB 5 Demonstration ------------------------------------------------------
+    SET_BIT(I2C2->CR2, I2C_CR2_STOP);
+    // Either read or write the target register.
 
-    // Connect GPIOC and GPIOB to the RCC
+    SET_BIT(I2C2->CR2, read_or_write); // Set read or write mode.
 
-    SET_BIT(RCC->AHBENR, RCC_AHBENR_GPIOBEN);
-    //SET_BIT(RCC->AHBENR, RCC_AHBENR_GPIOCEN);
+}
+
+static void initialize_i2c2( void ) {
 
     // Enable the I2C2 Peripheral in the RCC
 
@@ -179,7 +229,7 @@ int main(void) {
 
     // Request the WHO_AM_I register from the Gyroscope and wait for the transaction to complete.
 
-    SET_BIT(I2C2->TXDR, 0xF); // Address of the WHO_AM_I register on the gyroscope.
+    WRITE_REG(I2C2->TXDR, 0xF); // Address of the WHO_AM_I register on the gyroscope.
 
     while(!READ_BIT(I2C2->ISR, I2C_ISR_TC)) { } // Wait for the transaction to complete.
 
@@ -201,19 +251,144 @@ int main(void) {
 
     // Read the data from the RXDR register.
 
-    if(READ_BIT(I2C2->RXDR, I2C_RXDR_RXDATA) != 0xD3) // Determine if the value returned in the WHO_AM_I register is what we're expecting.
+    if(READ_REG(I2C2->RXDR) != 0xD3) // Determine if the value returned in the WHO_AM_I register is what we're expecting.
         i2c_initialization_error(COLOR_ORANGE);
+}
 
-    // Blinking a green led to indicate that we have successfully read the WHO_AM_I register from the gyroscope.
+// Main Program ================================================================
 
-    while(1){
 
-        uint32_t counter = 0;
-        bool     toggle  = false;
+// Change threshold to 30000
 
-        while(1)
-            if(!(counter++ % 10000))
-                (toggle = !toggle) ? LED_ON(COLOR_GREEN) : LED_OFF(COLOR_GREEN);
+#define THRESHOLD 5000
+
+int main(void) {
+
+    // MCU Configuration--------------------------------------------------------
+    // Reset of all peripherals, Initializes the Flash interface and the Systick.
+    HAL_Init();
+
+    // Configure the system clock
+    SystemClock_Config();
+    
+    // Initialize the LEDs
+    initialize_leds();
+
+    // Initialize the User Push Button
+    initialize_user_button();
+
+    // LAB 5 Demonstration ------------------------------------------------------
+
+    // Connect GPIOC and GPIOB to the RCC
+    SET_BIT(RCC->AHBENR, RCC_AHBENR_GPIOBEN);
+
+    // Initialize the I2C2 Peripheral and verify by requesting and checking the WHO_AM_I register from the gyroscope.
+    initialize_i2c2();
+
+    // Enable the X and Y sensing axes, as well as PD, in the CTRL_REG1 register
+
+    CLEAR_BIT(I2C2->ISR, I2C_ISR_STOPF); // Clear the STOPF flag.
+
+    const uint8_t CTRL_REG1  = 0x20;
+    uint8_t GYRO_CONFIGURE_PACKAGE = 0;
+
+    GYRO_CONFIGURE_PACKAGE |= (1 << 0); // Enable the Y axis.
+    GYRO_CONFIGURE_PACKAGE |= (1 << 1); // Enable the X axis.
+    GYRO_CONFIGURE_PACKAGE |= (1 << 3); // Enable Normal/Sleep mode.
+
+    CLEAR_BIT(I2C2->CR2, I2C_CR2_NBYTES);
+    SET_BIT(I2C2->CR2, (2 << I2C_CR2_NBYTES_Pos));
+    CLEAR_BIT(I2C2->CR2, I2C_CR2_RD_WRN); // Write mode
+
+    SET_BIT(I2C2->CR2, I2C_CR2_START); // Start the transaction.
+
+    while(!READ_BIT(I2C2->ISR, I2C_ISR_TXIS) && !READ_BIT(I2C2->ISR, I2C_ISR_NACKF)) { }
+
+    WRITE_REG(I2C2->TXDR, CTRL_REG1); // Address of the CTRL_REG1 register on the gyroscope.
+
+    while(!READ_BIT(I2C2->ISR, I2C_ISR_TXIS) && !READ_BIT(I2C2->ISR, I2C_ISR_NACKF)) { }
+
+    WRITE_REG(I2C2->TXDR, GYRO_CONFIGURE_PACKAGE); // Write the value to the CTRL_REG1 register, enabling the X and Y axes.
+
+    while(!READ_BIT(I2C2->ISR, I2C_ISR_TC)) { } // Wait for the transaction to complete.
+
+    SET_BIT(I2C2->CR2, I2C_CR2_STOP);
+
+    // With our gyroscope configured, we can now read the X and Y axis data.
+
+    while(1) {
+
+    	HAL_Delay(100); // Delay for 100 milliseconds
+
+        static int16_t x_axis_data = 0;
+        static int16_t y_axis_data = 0;
+
+        // Constantly read from both the X and Y axis registers.
+
+        const uint8_t OUT_X_L = 0xA8; // We will start at this address and count up to 0x2B. This will give us the X and Y axes data.
+
+        CLEAR_BIT(I2C2->CR2, I2C_CR2_NBYTES);
+        SET_BIT(I2C2->CR2, (1 << I2C_CR2_NBYTES_Pos));
+        CLEAR_BIT(I2C2->CR2, I2C_CR2_RD_WRN); // Write mode
+
+        SET_BIT(I2C2->CR2, I2C_CR2_START); // Start the transaction.
+
+        while(!READ_BIT(I2C2->ISR, I2C_ISR_TXIS) && !READ_BIT(I2C2->ISR, I2C_ISR_NACKF)) { }
+
+        WRITE_REG(I2C2->TXDR, OUT_X_L); // Address of the OUT_X_L register on the gyroscope.
+
+        while(!READ_BIT(I2C2->ISR, I2C_ISR_TC)) { } // Wait for the transaction to complete.
+
+        CLEAR_BIT(I2C2->CR2, I2C_CR2_NBYTES);
+        SET_BIT(I2C2->CR2, (4 << I2C_CR2_NBYTES_Pos));
+        SET_BIT(I2C2->CR2, I2C_CR2_RD_WRN); // Read mode
+
+        SET_BIT(I2C2->CR2, I2C_CR2_START); // Restart the transaction.
+
+        while(!READ_BIT(I2C2->ISR, I2C_ISR_RXNE) && !READ_BIT(I2C2->ISR, I2C_ISR_NACKF)) { }
+
+        x_axis_data = READ_REG(I2C2->RXDR);
+
+        while(!READ_BIT(I2C2->ISR, I2C_ISR_RXNE) && !READ_BIT(I2C2->ISR, I2C_ISR_NACKF)) { }
+
+        x_axis_data |= READ_REG(I2C2->RXDR) << 8;
+
+        while(!READ_BIT(I2C2->ISR, I2C_ISR_RXNE) && !READ_BIT(I2C2->ISR, I2C_ISR_NACKF)) { }
+
+        y_axis_data = READ_REG(I2C2->RXDR);
+
+        while(!READ_BIT(I2C2->ISR, I2C_ISR_RXNE) && !READ_BIT(I2C2->ISR, I2C_ISR_NACKF)) { }
+
+        y_axis_data |= READ_REG(I2C2->RXDR) << 8;
+
+        while(!READ_BIT(I2C2->ISR, I2C_ISR_TC)) { } // Wait for the transaction to complete.
+        
+        SET_BIT(I2C2->CR2, I2C_CR2_STOP);
+
+        // Change the onboard LEDs based on the X and Y axis data. If threshold is exceeded.
+        if(x_axis_data > THRESHOLD || x_axis_data <= -THRESHOLD) {
+            if(x_axis_data > 0) {
+
+                LED_ON(COLOR_GREEN);
+                LED_OFF(COLOR_ORANGE);
+            } else {
+
+                LED_OFF(COLOR_GREEN);
+                LED_ON(COLOR_ORANGE);
+            }
+        }
+
+        if(y_axis_data > THRESHOLD || y_axis_data <= -THRESHOLD) {
+            if (y_axis_data > 0) {
+
+                LED_ON(COLOR_RED);
+                LED_OFF(COLOR_BLUE);
+            } else {
+
+                LED_OFF(COLOR_RED);
+                LED_ON(COLOR_BLUE);
+            }
+        }
     }
 }
 
